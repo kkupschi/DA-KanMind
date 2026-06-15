@@ -1,6 +1,6 @@
 from rest_framework import serializers
+from django.contrib.auth import authenticate
 from auth_app.models import User
-
 
 class RegistrationSerializer(serializers.ModelSerializer):
     """Validates registration data and creates a new user."""
@@ -27,3 +27,26 @@ class RegistrationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop("repeated_password")
         return User.objects.create_user(**validated_data)
+
+
+class LoginSerializer(serializers.Serializer):
+    """Validates login credentials via email and password."""
+
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        user = authenticate(
+            username=attrs["email"], password=attrs["password"]
+        )
+        if not user:
+            raise serializers.ValidationError("Invalid credentials.")
+        attrs["user"] = user
+        return attrs
+
+class UserSerializer(serializers.ModelSerializer):
+    """Serializes basic public user information."""
+
+    class Meta:
+        model = User
+        fields = ["id", "email", "fullname"]
