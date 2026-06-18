@@ -1,16 +1,16 @@
-from rest_framework import viewsets, mixins, generics
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import PermissionDenied
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from rest_framework import viewsets, mixins, generics
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import IsAuthenticated
 from kanban_app.models import Board, Task, Comment
-from .serializers import (
-    BoardSerializer, BoardDetailSerializer, BoardUpdateSerializer,
-    TaskSerializer, CommentSerializer,
-)
 from .permissions import (
     IsBoardMemberOrOwner, IsBoardOwner, IsTaskBoardMember,
     IsTaskCreatorOrBoardOwner, IsCommentAuthor,
+)
+from .serializers import (
+    BoardSerializer, BoardDetailSerializer, BoardUpdateSerializer,
+    TaskSerializer, CommentSerializer,
 )
 
 class BoardViewSet(viewsets.ModelViewSet):

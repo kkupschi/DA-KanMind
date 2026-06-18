@@ -1,13 +1,12 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
-from rest_framework.authtoken.models import Token
 from rest_framework import status
+from rest_framework.authtoken.models import Token
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from auth_app.models import User
 from .serializers import (
     RegistrationSerializer, LoginSerializer, UserSerializer,
 )
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from auth_app.models import User
 
 class RegistrationView(APIView):
     """Creates a new user and returns an auth token."""
