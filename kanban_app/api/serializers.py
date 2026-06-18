@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from kanban_app.models import Board
+from auth_app.api.serializers import UserSerializer
+from kanban_app.models import Board, Task
+
 
 User = get_user_model()
 
@@ -49,3 +51,27 @@ class BoardSerializer(serializers.ModelSerializer):
         board.members.add(owner)
         return board
 
+class TaskSerializer(serializers.ModelSerializer):
+    """Serializes a task with nested user objects for reading."""
+
+    assignee = UserSerializer(read_only=True)
+    reviewer = UserSerializer(read_only=True)
+    comments_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Task
+        fields = [
+            "id",
+            "board",
+            "title",
+            "description",
+            "status",
+            "priority",
+            "assignee",
+            "reviewer",
+            "due_date",
+            "comments_count",
+        ]
+
+    def get_comments_count(self, obj):
+        return obj.comments.count()
