@@ -75,3 +75,20 @@ class TaskSerializer(serializers.ModelSerializer):
 
     def get_comments_count(self, obj):
         return obj.comments.count()
+
+class BoardDetailSerializer(serializers.ModelSerializer):
+    """Serializes a single board with nested members and tasks."""
+
+    owner_id = serializers.IntegerField(source="owner.id", read_only=True)
+    members = UserSerializer(many=True, read_only=True)
+    tasks = TaskSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Board
+        fields = [
+            "id",
+            "title",
+            "owner_id",
+            "members",
+            "tasks",
+        ]
