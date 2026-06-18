@@ -4,8 +4,14 @@ from rest_framework.exceptions import PermissionDenied
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from kanban_app.models import Board, Task, Comment
-from .serializers import BoardSerializer, BoardDetailSerializer, BoardUpdateSerializer, TaskSerializer, CommentSerializer
-from .permissions import IsBoardMemberOrOwner, IsBoardOwner, IsTaskBoardMember, IsTaskCreatorOrBoardOwner, IsCommentAuthor
+from .serializers import (
+    BoardSerializer, BoardDetailSerializer, BoardUpdateSerializer,
+    TaskSerializer, CommentSerializer,
+)
+from .permissions import (
+    IsBoardMemberOrOwner, IsBoardOwner, IsTaskBoardMember,
+    IsTaskCreatorOrBoardOwner, IsCommentAuthor,
+)
 
 class BoardViewSet(viewsets.ModelViewSet):
     """Provides list, create, retrieve, update and delete for boards."""
@@ -17,7 +23,9 @@ class BoardViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         if self.action == "list":
             user = self.request.user
-            return Board.objects.filter(Q(owner=user) | Q(members=user)).distinct()
+            return Board.objects.filter(
+                Q(owner=user) | Q(members=user)
+            ).distinct()
         return Board.objects.all()
 
     def get_serializer_class(self):
@@ -34,7 +42,10 @@ class BoardViewSet(viewsets.ModelViewSet):
             return [IsAuthenticated(), IsBoardMemberOrOwner()]
         return [IsAuthenticated()]
 
-class TaskViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+class TaskViewSet(
+    mixins.CreateModelMixin, mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin, viewsets.GenericViewSet,
+):
     """Provides create, update and delete for tasks."""
 
     queryset = Task.objects.all()
@@ -51,7 +62,8 @@ class TaskViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.Destr
     def create(self, request, *args, **kwargs):
         board = get_object_or_404(Board, pk=request.data.get("board"))
         user = request.user
-        if board.owner != user and not board.members.filter(id=user.id).exists():
+        is_member = board.members.filter(id=user.id).exists()
+        if board.owner != user and not is_member:
             raise PermissionDenied()
         return super().create(request, *args, **kwargs)
 
@@ -83,7 +95,8 @@ class CommentListCreateView(generics.ListCreateAPIView):
         task = get_object_or_404(Task, pk=self.kwargs["task_id"])
         user = self.request.user
         board = task.board
-        if board.owner != user and not board.members.filter(id=user.id).exists():
+        is_member = board.members.filter(id=user.id).exists()
+        if board.owner != user and not is_member:
             raise PermissionDenied()
         return task
 
@@ -100,6 +113,9 @@ class CommentDestroyView(generics.DestroyAPIView):
     permission_classes = [IsAuthenticated, IsCommentAuthor]
 
     def get_object(self):
-        comment = get_object_or_404(Comment, pk=self.kwargs["comment_id"], task_id=self.kwargs["task_id"])
+        comment = get_object_or_404(
+            Comment, pk=self.kwargs["comment_id"],
+            task_id=self.kwargs["task_id"],
+        )
         self.check_object_permissions(self.request, comment)
         return comment
