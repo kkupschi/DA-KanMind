@@ -3,18 +3,20 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from kanban_app.models import Board, Task
+from kanban_app.models import Board, Task, Comment
 from .serializers import (
     BoardSerializer,
     BoardDetailSerializer,
     BoardUpdateSerializer,
     TaskSerializer,
+    CommentSerializer,
 )
 from .permissions import (
     IsBoardMemberOrOwner,
     IsBoardOwner,
     IsTaskBoardMember,
     IsTaskCreatorOrBoardOwner,
+    IsCommentAuthor,
 )
 
 class BoardViewSet(viewsets.ModelViewSet):
@@ -89,3 +91,38 @@ class ReviewingView(generics.ListAPIView):
 
     def get_queryset(self):
         return Task.objects.filter(reviewer=self.request.user)
+
+class CommentListCreateView(generics.ListCreateAPIView):
+    """Lists and creates comments for a task accessible to board members."""
+
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_task(self):
+        task = get_object_or_404(Task, pk=self.kwargs["task_id"])
+        user = self.request.user
+        board = task.board
+        if board.owner != user and not board.members.filter(id=user.id).exists():
+            raise PermissionDenied()
+        return task
+
+    def get_queryset(self):
+        return self.get_task().comments.all()
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user, task=self.get_task())
+
+class CommentDestroyView(generics.DestroyAPIView):
+    """Deletes a comment; only the comment author is allowed."""
+
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated, IsCommentAuthor]
+
+    def get_object(self):
+        comment = get_object_or_404(
+            Comment,
+            pk=self.kwargs["comment_id"],
+            task_id=self.kwargs["task_id"],
+        )
+        self.check_object_permissions(self.request, comment)
+        return comment

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from auth_app.api.serializers import UserSerializer
-from kanban_app.models import Board, Task
+from kanban_app.models import Board, Task, Comment
 
 
 User = get_user_model()
@@ -173,3 +173,17 @@ class BoardUpdateSerializer(serializers.ModelSerializer):
         if members is not None:
             instance.members.set(members)
         return instance
+
+class CommentSerializer(serializers.ModelSerializer):
+    """Serializes a task comment with the author's full name."""
+
+    author = serializers.CharField(source="author.fullname", read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = [
+            "id",
+            "created_at",
+            "author",
+            "content",
+        ]
