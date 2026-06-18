@@ -17,12 +17,7 @@ class RegistrationView(APIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         token, created = Token.objects.get_or_create(user=user)
-        data = {
-            "token": token.key,
-            "fullname": user.fullname,
-            "email": user.email,
-            "user_id": user.id,
-        }
+        data = {"token": token.key, "fullname": user.fullname, "email": user.email, "user_id": user.id}
         return Response(data, status=status.HTTP_201_CREATED)
 
 class LoginView(APIView):
@@ -35,12 +30,7 @@ class LoginView(APIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
         token, created = Token.objects.get_or_create(user=user)
-        data = {
-            "token": token.key,
-            "fullname": user.fullname,
-            "email": user.email,
-            "user_id": user.id,
-        }
+        data = {"token": token.key, "fullname": user.fullname, "email": user.email, "user_id": user.id}
         return Response(data, status=status.HTTP_200_OK)
 
 class EmailCheckView(APIView):
@@ -51,15 +41,9 @@ class EmailCheckView(APIView):
     def get(self, request):
         email = request.query_params.get("email")
         if not email:
-            return Response(
-                {"detail": "Email query parameter is required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return Response({"detail": "Email query parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
         user = User.objects.filter(email=email).first()
         if not user:
-            return Response(
-                {"detail": "Email not found."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+            return Response({"detail": "Email not found."}, status=status.HTTP_404_NOT_FOUND)
         serializer = UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
