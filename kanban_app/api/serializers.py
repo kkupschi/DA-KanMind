@@ -52,10 +52,27 @@ class BoardSerializer(serializers.ModelSerializer):
         return board
 
 class TaskSerializer(serializers.ModelSerializer):
-    """Serializes a task with nested user objects for reading."""
+    """Serializes a task with nested user objects and writable assignee/reviewer ids."""
+
+    STATUS_VALUES = ["to-do", "in-progress", "review", "done"]
+    PRIORITY_VALUES = ["low", "medium", "high"]
 
     assignee = UserSerializer(read_only=True)
     reviewer = UserSerializer(read_only=True)
+    assignee_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        source="assignee",
+        write_only=True,
+        required=False,
+        allow_null=True,
+    )
+    reviewer_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        source="reviewer",
+        write_only=True,
+        required=False,
+        allow_null=True,
+    )
     comments_count = serializers.SerializerMethodField()
 
     class Meta:
@@ -68,13 +85,50 @@ class TaskSerializer(serializers.ModelSerializer):
             "status",
             "priority",
             "assignee",
+            "assignee_id",
             "reviewer",
+            "reviewer_id",
             "due_date",
             "comments_count",
         ]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance is not None:
+            self.fields["board"].read_only = True
+
     def get_comments_count(self, obj):
         return obj.comments.count()
+
+    def validate_status(self, value):
+        if value not in self.STATUS_VALUES:
+            raise serializers.ValidationError("Invalid status value.")
+        return value
+
+    def validate_priority(self, value):
+        if value not in self.PRIORITY_VALUES:
+            raise serializers.ValidationError("Invalid priority value.")
+        return value
+
+    def validate(self, attrs):
+        board = attrs.get("board") or getattr(self.instance, "board", None)
+        for user in (attrs.get("assignee"), attrs.get("reviewer")):
+            if user and not board.members.filter(id=user.id).exists():
+                raise serializers.ValidationError(
+                    "Assignee and reviewer must be members of the board."
+                )
+        return attrs
+
+    def create(self, validated_data):
+        validated_data["creator"] = self.context["request"].user
+        return Task.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        validated_data.pop("board", None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
 
 class BoardDetailSerializer(serializers.ModelSerializer):
     """Serializes a single board with nested members and tasks."""
