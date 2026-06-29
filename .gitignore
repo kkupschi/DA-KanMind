@@ -224,3 +224,6 @@ __marimo__/
 *.sqlite3
 /staticfiles/
 /media/
+# Postman tooling artifacts
+.postman/
+postman/

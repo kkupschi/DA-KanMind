@@ -1,3 +1,4 @@
+"""API views for authentication: registration, login and email check."""
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -8,12 +9,14 @@ from .serializers import (
     RegistrationSerializer, LoginSerializer, UserSerializer,
 )
 
+
 class RegistrationView(APIView):
     """Creates a new user and returns an auth token."""
 
     permission_classes = [AllowAny]
 
     def post(self, request):
+        """Register a user and return a token with the user data."""
         serializer = RegistrationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
@@ -24,12 +27,14 @@ class RegistrationView(APIView):
         }
         return Response(data, status=status.HTTP_201_CREATED)
 
+
 class LoginView(APIView):
     """Authenticates a user and returns an auth token."""
 
     permission_classes = [AllowAny]
 
     def post(self, request):
+        """Authenticate a user and return a token with the user data."""
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
@@ -40,12 +45,14 @@ class LoginView(APIView):
         }
         return Response(data, status=status.HTTP_200_OK)
 
+
 class EmailCheckView(APIView):
     """Checks whether a user with the given email exists."""
 
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        """Return the user matching the given email query parameter."""
         email = request.query_params.get("email")
         if not email:
             return Response(

@@ -1,3 +1,4 @@
+"""URL routes for the kanban app's API."""
 from django.urls import path, include
 from rest_framework.routers import SimpleRouter
 from .views import (

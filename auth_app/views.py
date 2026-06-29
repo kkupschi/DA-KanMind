@@ -1,3 +1,1 @@
-from django.shortcuts import render
-
-# Create your views here.
+"""App-level views for auth_app; the API views live in api/views.py."""
