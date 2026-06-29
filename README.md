@@ -45,25 +45,38 @@ tasks through comments.
    source venv/bin/activate
    ```
 
-3. Install the dependencies:
+3. Install the dependencies (includes `python-dotenv` for `.env` support):
 
    ```bash
    pip install -r requirements.txt
    ```
 
-4. Apply the database migrations:
+4. Create your environment file from the example and set your own secret key:
+
+   ```bash
+   # Windows
+   copy .env.example .env
+   # macOS / Linux
+   cp .env.example .env
+   ```
+
+   Open `.env` and set `SECRET_KEY` to a value of your choice. It is loaded
+   automatically on startup via `python-dotenv`; if no `.env` exists, a
+   development fallback key is used so the project still runs.
+
+5. Apply the database migrations:
 
    ```bash
    python manage.py migrate
    ```
 
-5. (Optional) Create a superuser to access the admin panel:
+6. (Optional) Create a superuser to access the admin panel:
 
    ```bash
    python manage.py createsuperuser
    ```
 
-6. Start the development server:
+7. Start the development server:
 
    ```bash
    python manage.py runserver
@@ -71,6 +84,18 @@ tasks through comments.
 
 The API is now available at `http://127.0.0.1:8000/api/` and the admin panel at
 `http://127.0.0.1:8000/admin/`.
+
+## Environment Variables
+
+Sensitive configuration is read from a `.env` file in the project root, loaded
+via `python-dotenv`. Copy `.env.example` to `.env` and adjust the values:
+
+| Variable     | Description                         |
+|--------------|-------------------------------------|
+| `SECRET_KEY` | Django secret key used for signing. |
+
+`.env` is git-ignored and must never be committed; `.env.example` documents the
+required variables.
 
 ## Authentication
 
